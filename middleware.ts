@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // Routes that don't require authentication
-const PUBLIC_ROUTES = ['/login', '/signup'];
+const PUBLIC_ROUTES = ['/login'];
 
 // Routes only accessible by MANAGER
 const MANAGER_ONLY_ROUTES = ['/dashboard', '/products/add'];
@@ -11,6 +11,17 @@ export function middleware(request: NextRequest) {
 
   const token = request.cookies.get('slooze_token')?.value;
   const role = request.cookies.get('slooze_role')?.value;
+
+  // Root path → redirect based on auth status
+  if (pathname === '/') {
+    const url = request.nextUrl.clone();
+    if (token) {
+      url.pathname = role === 'STORE_KEEPER' ? '/products' : '/dashboard';
+    } else {
+      url.pathname = '/login';
+    }
+    return NextResponse.redirect(url);
+  }
 
   const isPublic = PUBLIC_ROUTES.some((r) => pathname === r || pathname.startsWith(r + '/'));
 
